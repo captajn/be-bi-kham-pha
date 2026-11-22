@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bé Bi Khám Phá — Demo v2 cho bé 6 tuổi</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: "Baloo 2", "Comic Sans MS", "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(#87ceeb 0%, #bfe8ff 45%, #e8f9e3 100%);
+    min-height: 100vh; color: #333; overflow-x: hidden;
+  }
+  .screen { display: none; max-width: 720px; margin: 0 auto; padding: 16px 16px 40px; min-height: 100vh; }
+  .screen.active { display: block; animation: fadein .3s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+  @keyframes bounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+  @keyframes wiggle { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: .7; } }
+
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  h1 { font-size: 34px; margin: 8px 0; color: #e8590c; text-shadow: 2px 2px 0 #fff; }
+  h2 { font-size: 28px; margin: 8px 0; color: #1971c2; }
+  .subtitle { font-size: 20px; margin: 4px 0 16px; }
+
+  .icon-btn {
+    font-size: 30px; background: #fff; border: 3px solid #ffd43b; border-radius: 50%;
+    width: 64px; height: 64px; cursor: pointer; box-shadow: 0 4px 0 #e9c46a; flex-shrink: 0;
+  }
+  .icon-btn:active { transform: scale(.92); box-shadow: 0 1px 0 #e9c46a; }
+  .stars-badge {
+    background: #fff; border: 3px solid #ffd43b; border-radius: 999px;
+    padding: 8px 18px; font-size: 24px; font-weight: bold; box-shadow: 0 4px 0 #e9c46a;
+  }
+
+  .mascot { display: flex; align-items: flex-start; gap: 12px; margin: 12px 0; }
+  .mascot .bear { font-size: 84px; animation: floaty 2.5s ease-in-out infinite; line-height: 1; }
+  .bubble {
+    background: #fff; border: 3px solid #74c0fc; border-radius: 20px; padding: 14px 16px;
+    font-size: 22px; line-height: 1.4; box-shadow: 0 4px 0 #a5d8ff; flex: 1;
+  }
+
+  .game-card {
+    display: flex; align-items: center; gap: 16px; width: 100%; text-align: left;
+    background: #fff; border: 4px solid #ffd43b; border-radius: 24px; padding: 18px;
+    margin: 14px 0; cursor: pointer; box-shadow: 0 6px 0 #e9c46a; font-family: inherit;
+  }
+  .game-card:active { transform: scale(.98); box-shadow: 0 2px 0 #e9c46a; }
+  .game-card .emoji { font-size: 64px; line-height: 1; }
+  .game-card .t { font-size: 26px; font-weight: bold; color: #2b8a3e; }
+  .game-card .d { font-size: 19px; color: #555; margin-top: 4px; }
+  .game-card .star { font-size: 30px; margin-left: auto; }
+
+  .btn {
+    font-family: inherit; font-size: 24px; font-weight: bold; color: #fff;
+    background: #2b8a3e; border: none; border-radius: 999px; padding: 14px 28px;
+    margin: 8px 6px; cursor: pointer; box-shadow: 0 5px 0 #1e6b30; min-height: 64px;
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #1e6b30; }
+  .btn.blue { background: #1971c2; box-shadow: 0 5px 0 #12579b; }
+  .btn.orange { background: #e8590c; box-shadow: 0 5px 0 #b94808; }
+  .btn.gray { background: #868e96; box-shadow: 0 5px 0 #666; }
+  .btn.yellow { background: #f08c00; box-shadow: 0 5px 0 #a66300; }
+
+  .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .center { text-align: center; }
+
+  /* Game 1: blocks */
+  .palette { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+  .block-btn {
+    width: 72px; height: 72px; border-radius: 14px; border: 4px solid transparent;
+    font-size: 34px; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,.2);
+  }
+  .block-btn.sel { border-color: #1971c2; transform: scale(1.12); }
+  .grid {
+    display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px;
+    background: #a5d8ff; border: 4px solid #74c0fc; border-radius: 16px; padding: 6px;
+    max-width: 640px; margin: 0 auto; touch-action: manipulation;
+  }
+  .cell {
+    aspect-ratio: 1; border-radius: 8px; background: rgba(255,255,255,.75);
+    border: 2px dashed #cfe8ff; cursor: pointer; font-size: 22px;
+    display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .cell.ghost { border: 3px dashed #e8590c; background: rgba(255, 224, 180, .7); }
+  .cell.filled { border-style: solid; border-color: rgba(0,0,0,.25); animation: bounce .25s ease; }
+  .counter { font-size: 24px; font-weight: bold; margin: 10px 0; }
+  .counter span { color: #d6336c; }
+
+  /* Game 2: pilot */
+  .plane { font-size: 90px; animation: floaty 2s ease-in-out infinite; }
+  .passengers { font-size: 34px; line-height: 1.5; margin: 10px 0; word-break: break-all; }
+  .question { font-size: 28px; font-weight: bold; background: #fff; border-radius: 18px; padding: 16px; margin: 12px 0; border: 3px solid #74c0fc; }
+  .answers { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .ans {
+    font-family: inherit; font-size: 40px; font-weight: bold; width: 110px; height: 110px;
+    border-radius: 24px; border: 4px solid #ffd43b; background: #fff; cursor: pointer; box-shadow: 0 5px 0 #e9c46a;
+  }
+  .ans:active { transform: scale(.94); }
+  .ans.correct { background: #b2f2bb; border-color: #2b8a3e; }
+  .ans.wrong { background: #ffc9c9; border-color: #e03131; }
+  .progress { font-size: 22px; margin: 8px 0; }
+  .word-card { background: #fff3bf; border: 3px solid #ffd43b; border-radius: 18px; padding: 16px; font-size: 24px; margin: 14px 0; }
+
+  /* Game 3: firefighter */
+  .street { position: relative; height: 320px; background: linear-gradient(#cfe8ff 60%, #8ce99a 60%); border-radius: 18px; border: 3px solid #74c0fc; overflow: hidden; margin: 12px 0; }
+  .house { position: absolute; bottom: 70px; font-size: 76px; text-align: center; cursor: pointer; line-height: 1.1; }
+  .house .fire { display: block; font-size: 54px; animation: wiggle .4s ease-in-out infinite; cursor: pointer; }
+  .house .fire.out { display: none; }
+  .house .done { display: none; font-size: 54px; }
+  .house.saved .done { display: block; }
+  .truck { position: absolute; bottom: 8px; left: 4%; font-size: 64px; transition: left .6s ease; }
+  .drop { position: absolute; font-size: 40px; animation: fall .8s ease-in forwards; pointer-events: none; }
+  .big114 { font-size: 96px; font-weight: bold; color: #e03131; text-shadow: 3px 3px 0 #fff; letter-spacing: 8px; }
+  .steps { text-align: left; font-size: 24px; background: #fff; border-radius: 18px; padding: 18px 22px; margin: 14px 0; border: 3px solid #ffa8a8; line-height: 1.7; }
+
+  .win-box { background: #fff; border: 4px solid #ffd43b; border-radius: 24px; padding: 22px; margin: 16px 0; font-size: 26px; }
+  .confetti { position: fixed; top: -20px; width: 14px; height: 22px; z-index: 99; animation: fall 2.6s ease-in forwards; pointer-events: none; border-radius: 3px; }
+  .parent-link { margin-top: 26px; font-size: 18px; color: #555; background: none; border: none; text-decoration: underline; cursor: pointer; font-family: inherit; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+  .modal.open { display: flex; }
+  .modal-box { background: #fff; border-radius: 24px; padding: 24px; max-width: 480px; width: 100%; font-size: 22px; }
+  .footer { text-align: center; font-size: 16px; color: #666; margin-top: 24px; }
+
+  /* ===== v2: cảnh thị trấn, nhân vật vẽ tay, khối 3D ===== */
+  body { background: linear-gradient(#6ec1ff 0%, #a5dcff 32%, #c8f0ff 55%, #d8f7c5 78%, #a8e063 100%); }
+  .sky { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  .screen { position: relative; z-index: 1; }
+  .sun { position: absolute; top: 26px; right: 6%; width: 92px; height: 92px; border-radius: 50%;
+    background: radial-gradient(circle at 38% 35%, #fff8c4, #ffd93b 55%, #ffb703 100%);
+    box-shadow: 0 0 40px 12px rgba(255,217,59,.55); animation: floaty 4s ease-in-out infinite; }
+  .sun::after { content: "☀️"; font-size: 0; }
+  .cloud { position: absolute; background: #fff; border-radius: 999px; opacity: .95; animation: drift 26s linear infinite; }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+  .cloud.c1 { top: 54px; left: -140px; width: 130px; height: 42px; }
+  .cloud.c1::before { width: 62px; height: 62px; top: -30px; left: 22px; }
+  .cloud.c1::after { width: 44px; height: 44px; top: -18px; left: 66px; }
+  .cloud.c2 { top: 130px; left: -110px; width: 96px; height: 32px; animation-duration: 38s; animation-delay: -12s; opacity: .85; }
+  .cloud.c2::before { width: 48px; height: 48px; top: -22px; left: 16px; }
+  .cloud.c2::after { width: 34px; height: 34px; top: -12px; left: 50px; }
+  .cloud.c3 { top: 210px; left: -90px; width: 76px; height: 26px; animation-duration: 48s; animation-delay: -26s; opacity: .7; }
+  .cloud.c3::before { width: 38px; height: 38px; top: -18px; left: 14px; }
+  .cloud.c3::after { width: 28px; height: 28px; top: -10px; left: 40px; }
+  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(115vw); } }
+  .hills { position: fixed; left: 0; right: 0; bottom: 0; height: 120px; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 90% 100% at 15% 100%, #7ed957 0 55%, transparent 56%),
+                radial-gradient(ellipse 90% 100% at 85% 100%, #5ec962 0 55%, transparent 56%); opacity: .55; }
+  h1 { color: #d9480f; font-size: 38px; letter-spacing: .5px; }
+  .game-card { border-radius: 28px; padding: 10px 16px 14px; background: linear-gradient(#fffdf5, #fff3c4); border-width: 4px; overflow: hidden; }
+  .game-card .emoji { display: none; }
+  .card-art { width: 100%; height: 96px; border-radius: 18px; margin-bottom: 8px; display: block; }
+  .mascot .bear { font-size: 0; width: 92px; height: 92px; flex-shrink: 0; }
+  .mascot .bear svg { width: 92px; height: 92px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.18)); }
+  .bubble { border-width: 3px; background: linear-gradient(#fff, #fff8e1); }
+  .grid { background: linear-gradient(#8ed081, #6fbf5a); border-color: #4c9a3f; box-shadow: 0 8px 0 rgba(0,0,0,.15), inset 0 0 0 3px #a9e39b; }
+  .cell { background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.9); box-shadow: inset 0 -4px 0 rgba(0,0,0,.08); }
+  .cell.filled { box-shadow: inset 0 -6px 0 rgba(0,0,0,.22), inset 0 4px 0 rgba(255,255,255,.45), 0 3px 0 rgba(0,0,0,.15); text-shadow: 0 2px 0 rgba(0,0,0,.15); }
+  .street { background: linear-gradient(#9fd8ff 0 52%, #ffd93b 52% 62%, #8ce99a 62% 100%); border-width: 4px; box-shadow: 0 8px 0 rgba(0,0,0,.12); }
+  .house { font-size: 0; }
+  .house svg { width: 92px; height: 104px; }
+  .house .fire { font-size: 54px; }
+  .house .done { font-size: 54px; }
+  .truck { font-size: 0; width: 110px; }
+  .truck svg { width: 110px; height: 64px; }
+  .plane { font-size: 0; }
+  .plane svg { width: 150px; height: 74px; animation: floaty 2s ease-in-out infinite; }
+  .question { background: linear-gradient(#fff, #fff3bf); box-shadow: 0 5px 0 #ffd43b; }
+  .ans { background: linear-gradient(#fff, #ffe8a3); }
+  .win-box { background: linear-gradient(#fffbe6, #fff3bf); }
+  .town-banner { border-radius: 22px; overflow: hidden; border: 4px solid #fff; box-shadow: 0 8px 0 rgba(0,0,0,.12); margin: 6px 0 4px; }
+  .town-banner svg { display: block; width: 100%; height: auto; }
+  .scene-strip { border-radius: 18px; overflow: hidden; border: 3px solid #fff; box-shadow: 0 5px 0 rgba(0,0,0,.12); margin: 8px 0; }
+  .scene-strip svg { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><div class="sun"></div><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div></div>
+<div class="hills" aria-hidden="true"></div>
+
+<!-- ===== HUB ===== -->
+<div class="screen active" id="hub">
+  <header>
+    <h1>🐻 Bé Bi Khám Phá</h1>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="stars-badge">⭐ <span id="starCount">0</span>/3</div>
+      <button class="icon-btn" id="soundBtn" onclick="toggleSound()" aria-label="Bật tắt tiếng">🔊</button>
+    </div>
+  </header>
+  <div class="mascot">
+    <div class="bear"><svg viewBox="0 0 100 100" role="img" aria-label="Gấu Bo"><circle cx="24" cy="26" r="14" fill="#8d5a2b"/><circle cx="76" cy="26" r="14" fill="#8d5a2b"/><circle cx="24" cy="26" r="7" fill="#f4c99b"/><circle cx="76" cy="26" r="7" fill="#f4c99b"/><ellipse cx="50" cy="56" rx="34" ry="32" fill="#b07a45"/><ellipse cx="50" cy="66" rx="20" ry="15" fill="#f7dcb0"/><circle cx="38" cy="50" r="5" fill="#222"/><circle cx="62" cy="50" r="5" fill="#222"/><circle cx="40" cy="48" r="1.8" fill="#fff"/><circle cx="64" cy="48" r="1.8" fill="#fff"/><ellipse cx="50" cy="64" rx="7" ry="5" fill="#5b3a1a"/><path d="M50 69 Q50 76 42 76 M50 69 Q50 76 58 76" stroke="#5b3a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M22 34 Q50 8 78 34 L74 40 Q50 20 26 40 Z" fill="#ffd43b"/><rect x="44" y="12" width="12" height="8" rx="2" fill="#e8590c"/></svg></div>
+    <div class="bubble" id="hubBubble">Chào bé! Chú là Gấu Bo. Hôm nay bé muốn xây nhà, lái máy bay hay làm lính cứu hỏa nào?</div>
+  </div>
+  <div class="town-banner"><svg viewBox="0 0 680 150" role="img" aria-label="Thị trấn Bé Bi"><rect width="680" height="150" fill="#bfe8ff"/><circle cx="600" cy="26" r="20" fill="#ffd93b"/><ellipse cx="120" cy="30" rx="42" ry="14" fill="#fff"/><ellipse cx="300" cy="22" rx="52" ry="16" fill="#fff"/><rect y="118" width="680" height="32" fill="#7ed957"/><rect y="112" width="680" height="10" fill="#8a5a2b"/><g><rect x="40" y="70" width="90" height="48" fill="#fff3bf" stroke="#e8590c" stroke-width="3"/><path d="M30 72 L85 40 L140 72 Z" fill="#e03131"/><rect x="76" y="92" width="18" height="26" fill="#8a5a2b"/><rect x="50" y="80" width="16" height="14" fill="#74c0fc"/><rect x="104" y="80" width="16" height="14" fill="#74c0fc"/></g><g><rect x="180" y="60" width="100" height="58" fill="#ffe8cc" stroke="#1971c2" stroke-width="3"/><path d="M170 62 L230 28 L290 62 Z" fill="#1971c2"/><rect x="220" y="90" width="20" height="28" fill="#8a5a2b"/><rect x="192" y="72" width="18" height="16" fill="#74c0fc"/><rect x="250" y="72" width="18" height="16" fill="#74c0fc"/></g><g><circle cx="350" cy="82" r="26" fill="#2b8a3e"/><rect x="344" y="100" width="12" height="18" fill="#8a5a2b"/></g><g><rect x="420" y="72" width="80" height="46" fill="#fff" stroke="#2b8a3e" stroke-width="3"/><path d="M412 74 L460 44 L508 74 Z" fill="#2b8a3e"/><rect x="452" y="94" width="16" height="24" fill="#8a5a2b"/></g><g><circle cx="560" cy="86" r="24" fill="#2b8a3e"/><rect x="554" y="102" width="12" height="16" fill="#8a5a2b"/></g><g><rect x="600" y="78" width="60" height="40" fill="#ffd43b" stroke="#e8590c" stroke-width="3"/><path d="M594 80 L630 54 L666 80 Z" fill="#e8590c"/></g></svg></div>
+  <button class="game-card" onclick="openGame('build')">
+    <svg class="card-art" viewBox="0 0 600 96"><rect width="600" height="96" fill="#c8f0a8"/><rect y="66" width="600" height="30" fill="#8ed081"/><g><rect x="240" y="34" width="34" height="32" fill="#ff8787" stroke="#c92a2a" stroke-width="3"/><rect x="274" y="34" width="34" height="32" fill="#b08968" stroke="#7a4a21" stroke-width="3"/><rect x="308" y="34" width="34" height="32" fill="#74c0fc" stroke="#1971c2" stroke-width="3"/><rect x="257" y="2" width="34" height="32" fill="#ffa94d" stroke="#d9480f" stroke-width="3"/><rect x="291" y="2" width="34" height="32" fill="#ffa94d" stroke="#d9480f" stroke-width="3"/></g><circle cx="60" cy="24" r="18" fill="#ffd93b"/><ellipse cx="480" cy="22" rx="40" ry="12" fill="#fff"/><text x="380" y="58" font-size="34">🧱 ⭐</text></svg>
+    <span><span class="t">Xây Nhà Khối Vuông</span><br><span class="d">Xếp khối, đếm khối, xây nhà theo mẫu</span></span>
+    <span class="star" id="star-build">☆</span>
+  </button>
+  <button class="game-card" onclick="openGame('pilot')">
+    <svg class="card-art" viewBox="0 0 600 96"><rect width="600" height="96" fill="#a5dcff"/><ellipse cx="90" cy="24" rx="46" ry="13" fill="#fff"/><ellipse cx="500" cy="30" rx="52" ry="14" fill="#fff"/><g><ellipse cx="300" cy="52" rx="72" ry="16" fill="#fff"/><path d="M240 52 L300 34 L360 52 Z" fill="#e8590c"/><path d="M300 34 L306 12 L318 34 Z" fill="#1971c2"/><rect x="356" y="46" width="34" height="10" rx="4" fill="#1971c2"/><circle cx="318" cy="50" r="7" fill="#74c0fc"/></g><text x="40" y="88" font-size="22" fill="#1971c2" font-weight="bold">✈ airplane • pilot</text></svg>
+    <span><span class="t">Phi Công Nhí</span><br><span class="d">Đếm hành khách, cộng trừ trong 20</span></span>
+    <span class="star" id="star-pilot">☆</span>
+  </button>
+  <button class="game-card" onclick="openGame('fire')">
+    <svg class="card-art" viewBox="0 0 600 96"><rect width="600" height="96" fill="#ffe8cc"/><rect y="70" width="600" height="26" fill="#8a5a2b"/><g><rect x="60" y="30" width="120" height="40" fill="#e03131"/><rect x="70" y="40" width="34" height="18" fill="#fff"/><rect x="116" y="40" width="34" height="18" fill="#fff"/><circle cx="88" cy="74" r="12" fill="#222"/><circle cx="152" cy="74" r="12" fill="#222"/><text x="186" y="58" font-size="30">💦 🔥</text></g><text x="330" y="58" font-size="30" font-weight="bold" fill="#e03131">114</text></svg>
+    <span><span class="t">Lính Cứu Hỏa</span><br><span class="d">Dập lửa, học số khẩn cấp 114</span></span>
+    <span class="star" id="star-fire">☆</span>
+  </button>
+  <div class="center"><button class="parent-link" onclick="openParent()">👨‍👩‍👦 Khu vực Phụ huynh</button></div>
+  <div class="footer">Bản demo v2 — vẽ lại thị trấn, Gấu Bo, máy bay, xe cứu hỏa • Chơi offline • Không quảng cáo<br>Tải file về, mở bằng Chrome là chơi được.</div>
+</div>
+
+<!-- ===== GAME 1: BUILD ===== -->
+<div class="screen" id="game-build">
+  <div class="nav">
+    <button class="icon-btn" onclick="goHub()">🏠</button>
+    <h2>🧱 Xây Nhà Khối Vuông</h2>
+    <button class="icon-btn" onclick="toggleSound()" aria-label="Bật tắt tiếng">🔊</button>
+  </div>
+  <div class="mascot"><div class="bear"><svg viewBox="0 0 100 100" role="img" aria-label="Gấu Bo"><circle cx="24" cy="26" r="14" fill="#8d5a2b"/><circle cx="76" cy="26" r="14" fill="#8d5a2b"/><circle cx="24" cy="26" r="7" fill="#f4c99b"/><circle cx="76" cy="26" r="7" fill="#f4c99b"/><ellipse cx="50" cy="56" rx="34" ry="32" fill="#b07a45"/><ellipse cx="50" cy="66" rx="20" ry="15" fill="#f7dcb0"/><circle cx="38" cy="50" r="5" fill="#222"/><circle cx="62" cy="50" r="5" fill="#222"/><circle cx="40" cy="48" r="1.8" fill="#fff"/><circle cx="64" cy="48" r="1.8" fill="#fff"/><ellipse cx="50" cy="64" rx="7" ry="5" fill="#5b3a1a"/><path d="M50 69 Q50 76 42 76 M50 69 Q50 76 58 76" stroke="#5b3a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M22 34 Q50 8 78 34 L74 40 Q50 20 26 40 Z" fill="#ffd43b"/><rect x="44" y="12" width="12" height="8" rx="2" fill="#e8590c"/></svg></div><div class="bubble" id="buildBubble">Bé chọn khối rồi chạm vào ô để xếp nhé! Chạm vào khối đã xếp để gỡ ra.</div></div>
+  <div class="palette" id="palette"></div>
+  <div class="grid" id="grid"></div>
+  <div class="counter center">Đã xếp: <span id="blockTotal">0</span> khối &nbsp;•&nbsp; 🟩 <span id="c-grass">0</span> &nbsp;🟫 <span id="c-wood">0</span> &nbsp;🟥 <span id="c-brick">0</span> &nbsp;🟦 <span id="c-glass">0</span> &nbsp;🔺 <span id="c-roof">0</span></div>
+  <div class="center">
+    <button class="btn yellow" onclick="toggleTemplate()">🏠 Xem mẫu nhà</button>
+    <button class="btn blue" onclick="countBlocks()">🔢 Đếm khối</button>
+    <button class="btn gray" onclick="clearGrid()">🗑 Xóa hết</button>
+    <button class="btn" onclick="finishBuild()">🎉 Xong rồi!</button>
+  </div>
+</div>
+
+<!-- ===== GAME 2: PILOT ===== -->
+<div class="screen" id="game-pilot">
+  <div class="nav">
+    <button class="icon-btn" onclick="goHub()">🏠</button>
+    <h2>✈️ Phi Công Nhí</h2>
+    <button class="icon-btn" onclick="toggleSound()" aria-label="Bật tắt tiếng">🔊</button>
+  </div>
+  <div class="center"><div class="plane"><svg viewBox="0 0 150 74"><ellipse cx="75" cy="44" rx="52" ry="14" fill="#fff" stroke="#1971c2" stroke-width="3"/><path d="M40 44 L75 26 L110 44 Z" fill="#e8590c"/><path d="M75 26 L80 8 L90 26 Z" fill="#1971c2"/><rect x="118" y="38" width="26" height="9" rx="4" fill="#1971c2"/><circle cx="92" cy="42" r="6" fill="#74c0fc"/><circle cx="106" cy="42" r="5" fill="#74c0fc"/><circle cx="30" cy="46" r="4" fill="#ffd43b"/></svg></div></div>
+  <div class="progress center" id="pilotProgress">Câu 1 / 5</div>
+  <div class="passengers center" id="passengers"></div>
+  <div class="question center" id="pilotQuestion"></div>
+  <div class="answers" id="pilotAnswers"></div>
+  <div class="center"><button class="btn blue" onclick="speakQuestion()">🔊 Nghe lại câu hỏi</button></div>
+  <div id="pilotWin" style="display:none;">
+    <div class="win-box center">🎉 Hoan hô! Bé làm phi công giỏi quá!<br>⭐ Bé nhận được 1 ngôi sao!</div>
+    <div class="word-card center">✈️ Máy bay tiếng Anh là <b>airplane</b>!<br>👨‍✈️ Phi công tiếng Anh là <b>pilot</b>!</div>
+    <div class="center"><button class="btn" onclick="goHub()">🏠 Về thị trấn</button></div>
+  </div>
+</div>
+
+<!-- ===== GAME 3: FIREFIGHTER ===== -->
+<div class="screen" id="game-fire">
+  <div class="nav">
+    <button class="icon-btn" onclick="goHub()">🏠</button>
+    <h2>🚒 Lính Cứu Hỏa</h2>
+    <button class="icon-btn" onclick="toggleSound()" aria-label="Bật tắt tiếng">🔊</button>
+  </div>
+  <div class="mascot"><div class="bear"><svg viewBox="0 0 100 100" role="img" aria-label="Gấu Bo"><circle cx="24" cy="26" r="14" fill="#8d5a2b"/><circle cx="76" cy="26" r="14" fill="#8d5a2b"/><circle cx="24" cy="26" r="7" fill="#f4c99b"/><circle cx="76" cy="26" r="7" fill="#f4c99b"/><ellipse cx="50" cy="56" rx="34" ry="32" fill="#b07a45"/><ellipse cx="50" cy="66" rx="20" ry="15" fill="#f7dcb0"/><circle cx="38" cy="50" r="5" fill="#222"/><circle cx="62" cy="50" r="5" fill="#222"/><circle cx="40" cy="48" r="1.8" fill="#fff"/><circle cx="64" cy="48" r="1.8" fill="#fff"/><ellipse cx="50" cy="64" rx="7" ry="5" fill="#5b3a1a"/><path d="M50 69 Q50 76 42 76 M50 69 Q50 76 58 76" stroke="#5b3a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M22 34 Q50 8 78 34 L74 40 Q50 20 26 40 Z" fill="#ffd43b"/><rect x="44" y="12" width="12" height="8" rx="2" fill="#e8590c"/></svg></div><div class="bubble" id="fireBubble">Có khói ở 3 ngôi nhà! Bé chạm vào lửa để xịt nước nhé. Mỗi đám lửa cần xịt 3 lần.</div></div>
+  <div class="street" id="street">
+    <div class="house" style="left:6%;" data-house="0"><span class="fire" onclick="spray(event,0)">🔥</span><span class="done">✅</span><svg viewBox="0 0 92 104"><rect x="14" y="44" width="64" height="52" fill="#fff3bf" stroke="#e8590c" stroke-width="3"/><path d="M6 48 L46 16 L86 48 Z" fill="#e03131"/><rect x="40" y="66" width="14" height="30" fill="#8a5a2b"/><rect x="22" y="54" width="14" height="12" fill="#74c0fc"/><rect x="58" y="54" width="14" height="12" fill="#74c0fc"/></svg><div style="font-size:20px;">Nhà 1: <span id="left0">3</span> lần xịt</div></div>
+    <div class="house" style="left:38%;" data-house="1"><span class="fire" onclick="spray(event,1)">🔥</span><span class="done">✅</span><svg viewBox="0 0 92 104"><rect x="14" y="44" width="64" height="52" fill="#fff3bf" stroke="#e8590c" stroke-width="3"/><path d="M6 48 L46 16 L86 48 Z" fill="#e03131"/><rect x="40" y="66" width="14" height="30" fill="#8a5a2b"/><rect x="22" y="54" width="14" height="12" fill="#74c0fc"/><rect x="58" y="54" width="14" height="12" fill="#74c0fc"/></svg><div style="font-size:20px;">Nhà 2: <span id="left1">3</span> lần xịt</div></div>
+    <div class="house" style="left:70%;" data-house="2"><span class="fire" onclick="spray(event,2)">🔥</span><span class="done">✅</span><svg viewBox="0 0 92 104"><rect x="14" y="44" width="64" height="52" fill="#fff3bf" stroke="#e8590c" stroke-width="3"/><path d="M6 48 L46 16 L86 48 Z" fill="#e03131"/><rect x="40" y="66" width="14" height="30" fill="#8a5a2b"/><rect x="22" y="54" width="14" height="12" fill="#74c0fc"/><rect x="58" y="54" width="14" height="12" fill="#74c0fc"/></svg><div style="font-size:20px;">Nhà 3: <span id="left2">3</span> lần xịt</div></div>
+    <div class="truck" id="truck"><svg viewBox="0 0 110 64"><rect x="6" y="18" width="72" height="30" fill="#e03131" stroke="#a61e1e" stroke-width="3" rx="6"/><rect x="78" y="26" width="26" height="22" fill="#ff8787" stroke="#a61e1e" stroke-width="3" rx="4"/><rect x="84" y="30" width="14" height="10" fill="#bfe8ff"/><circle cx="26" cy="50" r="10" fill="#222"/><circle cx="26" cy="50" r="4" fill="#adb5bd"/><circle cx="58" cy="50" r="10" fill="#222"/><circle cx="58" cy="50" r="4" fill="#adb5bd"/><circle cx="90" cy="50" r="10" fill="#222"/><circle cx="90" cy="50" r="4" fill="#adb5bd"/><rect x="14" y="24" width="20" height="12" fill="#fff" rx="2"/><text x="40" y="36" font-size="13" font-weight="bold" fill="#fff">114</text></svg></div>
+  </div>
+  <div id="fireWin" style="display:none;">
+    <div class="win-box center">🎉 Bé dập tắt hết lửa rồi! Giỏi quá!<br>⭐ Bé nhận được 1 ngôi sao!</div>
+    <div class="center"><div class="big114">114</div>
+    <div style="font-size:26px; font-weight:bold;">Thấy cháy thì gọi 1-1-4 nhé!</div></div>
+    <div class="steps">🔥 <b>3 bước khi thấy cháy:</b><br>1️⃣ Báo ngay cho người lớn<br>2️⃣ Gọi số <b>114</b><br>3️⃣ Không quay lại lấy đồ chơi</div>
+    <div class="center"><button class="btn" onclick="goHub()">🏠 Về thị trấn</button></div>
+  </div>
+</div>
+
+<!-- ===== PARENT MODAL ===== -->
+<div class="modal" id="parentModal">
+  <div class="modal-box center">
+    <div id="parentGate">
+      <b>🔒 Khu vực Phụ huynh</b><br><br>Phụ huynh hãy trả lời để mở:<br><br>
+      <div style="font-size:36px; font-weight:bold;">3 + 4 = ?</div><br>
+      <button class="btn" onclick="parentAnswer(7)">7</button>
+      <button class="btn gray" onclick="parentAnswer(5)">5</button>
+      <button class="btn gray" onclick="parentAnswer(9)">9</button><br><br>
+      <button class="parent-link" onclick="closeParent()">Đóng</button>
+    </div>
+    <div id="parentArea" style="display:none;">
+      <b>👨‍👩‍👦 Khu vực Phụ huynh</b><br><br>
+      <div id="parentStats"></div><br>
+      <button class="btn gray" onclick="resetProgress()">🗑 Xóa tiến trình của bé</button><br><br>
+      <button class="parent-link" onclick="closeParent()">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============ Âm thanh + giọng nói ============ */
+let soundOn = true;
+let audioCtx = null;
+function beep(freq, dur, type) {
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch (e) { /* không có âm thanh vẫn chơi được */ }
+}
+function popSound() { beep(600, 0.12, "triangle"); }
+function goodSound() { beep(523, .15); setTimeout(() => beep(659, .15), 120); setTimeout(() => beep(784, .25), 240); }
+function toggleSound() {
+  soundOn = !soundOn;
+  document.querySelectorAll("#soundBtn, .icon-btn[aria-label='Bật tắt tiếng']").forEach(b => b.textContent = soundOn ? "🔊" : "🔇");
+  if (!soundOn && "speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+const PRAISES = ["Giỏi quá!", "Bé làm đúng rồi!", "Hoan hô bé!", "Bé thông minh quá!", "Tuyệt vời!"];
+function praise() { return PRAISES[Math.floor(Math.random() * PRAISES.length)]; }
+function speak(text, lang) {
+  if (!soundOn || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || "vi-VN"; u.rate = 0.9; u.pitch = 1.1;
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* không có giọng nói vẫn chơi được */ }
+}
+
+/* ============ Ngôi sao (lưu local) ============ */
+let stars = {};
+try { stars = JSON.parse(localStorage.getItem("bbkp_stars") || "{}"); } catch (e) { stars = {}; }
+function saveStars() { try { localStorage.setItem("bbkp_stars", JSON.stringify(stars)); } catch (e) {} }
+function refreshStars() {
+  const n = ["build", "pilot", "fire"].filter(k => stars[k]).length;
+  document.getElementById("starCount").textContent = n;
+  ["build", "pilot", "fire"].forEach(k => {
+    document.getElementById("star-" + k).textContent = stars[k] ? "⭐" : "☆";
+  });
+}
+function awardStar(key) {
+  if (!stars[key]) { stars[key] = 1; saveStars(); }
+  refreshStars(); confetti(); goodSound();
+}
+function confetti() {
+  const colors = ["#ff6b6b", "#ffd43b", "#69db7c", "#4dabf7", "#da77f2", "#ffa94d"];
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement("div");
+    c.className = "confetti";
+    c.style.left = Math.random() * 100 + "vw";
+    c.style.background = colors[i % colors.length];
+    c.style.animationDelay = (Math.random() * 0.6) + "s";
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3600);
+  }
+}
+
+/* ============ Điều hướng ============ */
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0, 0);
+}
+function goHub() { popSound(); show("hub"); }
+function openGame(which) {
+  popSound();
+  if (which === "build") { show("game-build"); speak("Bé chọn khối rồi chạm vào ô để xếp nhé!"); }
+  if (which === "pilot") { show("game-pilot"); startPilot(); }
+  if (which === "fire") { show("game-fire"); resetFire(); speak("Có khói ở ba ngôi nhà! Bé chạm vào lửa để xịt nước nhé."); }
+}
+
+/* ============ GAME 1: Xây khối ============ */
+const BLOCKS = [
+  { id: "grass", emoji: "🟩", name: "khối cỏ", color: "#69db7c" },
+  { id: "wood",  emoji: "🟫", name: "khối gỗ", color: "#b08968" },
+  { id: "brick", emoji: "🟥", name: "khối gạch", color: "#ff8787" },
+  { id: "glass", emoji: "🟦", name: "khối kính", color: "#74c0fc" },
+  { id: "roof",  emoji: "🔺", name: "khối mái", color: "#ffa94d" }
+];
+let selBlock = BLOCKS[1];
+const ROWS = 7, COLS = 10;
+let gridState = {}; // "r,c" -> block id
+let showTemplate = false;
+/* Mẫu nhà: mái đỏ, tường gỗ, cửa nâu, cửa sổ kính */
+const TEMPLATE = {
+  "2,4": "roof", "2,5": "roof",
+  "3,3": "roof", "3,4": "roof", "3,5": "roof", "3,6": "roof",
+  "4,3": "wood", "4,6": "wood",
+  "5,3": "wood", "5,4": "wood", "5,5": "glass", "5,6": "wood",
+  "6,3": "wood", "6,4": "wood", "6,5": "wood", "6,6": "wood"
+};
+(function buildPalette() {
+  const pal = document.getElementById("palette");
+  BLOCKS.forEach(b => {
+    const btn = document.createElement("button");
+    btn.className = "block-btn" + (b.id === selBlock.id ? " sel" : "");
+    btn.style.background = b.color;
+    btn.textContent = b.emoji;
+    btn.title = b.name;
+    btn.onclick = () => {
+      selBlock = b; popSound();
+      document.querySelectorAll(".block-btn").forEach(x => x.classList.remove("sel"));
+      btn.classList.add("sel");
+      speak("Bé chọn " + b.name);
+    };
+    pal.appendChild(btn);
+  });
+  const g = document.getElementById("grid");
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    const cell = document.createElement("button");
+    cell.className = "cell"; cell.dataset.key = r + "," + c;
+    cell.setAttribute("aria-label", "Ô hàng " + (r + 1) + " cột " + (c + 1));
+    cell.onclick = () => toggleCell(r, c, cell);
+    g.appendChild(cell);
+  }
+})();
+function blockById(id) { return BLOCKS.find(b => b.id === id); }
+function toggleCell(r, c, cell) {
+  const key = r + "," + c;
+  if (gridState[key]) {
+    delete gridState[key];
+    cell.className = "cell" + (showTemplate && TEMPLATE[key] ? " ghost" : "");
+    cell.textContent = ""; cell.style.background = "";
+    beep(300, 0.1, "triangle");
+  } else {
+    gridState[key] = selBlock.id;
+    cell.className = "cell filled";
+    cell.textContent = selBlock.emoji;
+    cell.style.background = selBlock.color;
+    beep(500, 0.1, "square");
+  }
+  updateCounts();
+}
+function updateCounts() {
+  const counts = { grass: 0, wood: 0, brick: 0, glass: 0, roof: 0 };
+  Object.values(gridState).forEach(id => { if (counts[id] !== undefined) counts[id]++; });
+  const total = Object.keys(gridState).length;
+  document.getElementById("blockTotal").textContent = total;
+  Object.keys(counts).forEach(k => document.getElementById("c-" + k).textContent = counts[k]);
+}
+function toggleTemplate() {
+  showTemplate = !showTemplate; popSound();
+  document.querySelectorAll(".cell").forEach(cell => {
+    const key = cell.dataset.key;
+    if (!gridState[key]) {
+      cell.classList.toggle("ghost", showTemplate && !!TEMPLATE[key]);
+    }
+  });
+  const msg = showTemplate ? "Đây là mẫu nhà! Bé xếp khối theo viền cam nhé." : "Bé tự sáng tạo nhé!";
+  document.getElementById("buildBubble").textContent = msg;
+  speak(msg);
+}
+function countBlocks() {
+  const counts = { grass: 0, wood: 0, brick: 0, glass: 0, roof: 0 };
+  Object.values(gridState).forEach(id => { if (counts[id] !== undefined) counts[id]++; });
+  const total = Object.keys(gridState).length;
+  let msg;
+  if (total === 0) msg = "Bé chưa xếp khối nào. Bé xếp thử vài khối nhé!";
+  else {
+    msg = "Bé xếp được " + total + " khối! Trong đó có " + counts.grass + " khối cỏ, " + counts.wood + " khối gỗ, " + counts.brick + " khối gạch, " + counts.glass + " khối kính, " + counts.roof + " khối mái.";
+  }
+  document.getElementById("buildBubble").textContent = msg;
+  speak(msg); goodSound();
+}
+function clearGrid() {
+  gridState = {};
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.className = "cell" + (showTemplate && TEMPLATE[cell.dataset.key] ? " ghost" : "");
+    cell.textContent = ""; cell.style.background = "";
+  });
+  updateCounts(); popSound();
+}
+function finishBuild() {
+  const total = Object.keys(gridState).length;
+  let matches = 0, totalTpl = Object.keys(TEMPLATE).length;
+  Object.keys(TEMPLATE).forEach(k => { if (gridState[k] === TEMPLATE[k]) matches++; });
+  if (total < 5) {
+    const msg = "Bé xếp thêm vài khối nữa rồi bấm Xong nhé!";
+    document.getElementById("buildBubble").textContent = msg; speak(msg); return;
+  }
+  const p = praise();
+  let msg = p + " Bé xếp được " + total + " khối!";
+  if (matches === totalTpl) msg += " Bé xếp giống hệt mẫu nhà luôn!";
+  else if (showTemplate && matches > 0) msg += " Bé xếp giống mẫu được " + matches + " khối rồi!";
+  document.getElementById("buildBubble").textContent = msg + " ⭐";
+  speak(msg);
+  awardStar("build");
+}
+
+/* ============ GAME 2: Phi công nhí ============ */
+let pilotRound = 0, pilotAnswer = 0, pilotWrong = 0, pilotQText = "";
+function randInt(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+function startPilot() {
+  pilotRound = 0;
+  document.getElementById("pilotWin").style.display = "none";
+  nextPilotRound();
+}
+function nextPilotRound() {
+  if (pilotRound >= 5) {
+    document.getElementById("pilotWin").style.display = "block";
+    document.getElementById("pilotQuestion").textContent = "Bé hoàn thành rồi!";
+    document.getElementById("pilotAnswers").innerHTML = "";
+    document.getElementById("passengers").textContent = "🎉 ✈️ 🎉";
+    awardStar("pilot");
+    speak("Hoan hô! Bé làm phi công giỏi quá! Máy bay tiếng Anh là airplane!");
+    return;
+  }
+  pilotRound++; pilotWrong = 0;
+  document.getElementById("pilotProgress").textContent = "Câu " + pilotRound + " / 5";
+  const isAdd = Math.random() < 0.6;
+  let a, b;
+  if (isAdd) { a = randInt(3, 12); b = randInt(2, 8); pilotAnswer = a + b; }
+  else { a = randInt(8, 19); b = randInt(2, a - 1); pilotAnswer = a - b; }
+  pilotQText = isAdd
+    ? "Máy bay có " + a + " khách. Thêm " + b + " khách nữa lên máy bay. Tất cả có mấy khách?"
+    : "Máy bay có " + a + " khách. Có " + b + " khách xuống máy bay. Còn lại mấy khách?";
+  document.getElementById("pilotQuestion").textContent = pilotQText;
+  let faces = "";
+  for (let i = 0; i < a; i++) faces += (i % 2 ? "👧" : "👦");
+  if (isAdd) faces += " ➕ " + "🧒".repeat(b);
+  else faces += "  — xuống " + b + " khách ➡️";
+  document.getElementById("passengers").textContent = faces;
+  const opts = new Set([pilotAnswer]);
+  while (opts.size < 3) {
+    const d = pilotAnswer + randInt(-3, 3);
+    if (d >= 0 && d <= 20 && d !== pilotAnswer) opts.add(d);
+  }
+  const arr = [...opts].sort(() => Math.random() - 0.5);
+  const box = document.getElementById("pilotAnswers");
+  box.innerHTML = "";
+  arr.forEach(n => {
+    const btn = document.createElement("button");
+    btn.className = "ans"; btn.textContent = n;
+    btn.onclick = () => checkPilot(n, btn);
+    box.appendChild(btn);
+  });
+  speak(pilotQText);
+}
+function speakQuestion() { speak(pilotQText); }
+function checkPilot(n, btn) {
+  if (n === pilotAnswer) {
+    btn.classList.add("correct");
+    const p = praise();
+    speak(p + " Đáp án là " + pilotAnswer + "!");
+    goodSound();
+    setTimeout(nextPilotRound, 1400);
+  } else {
+    pilotWrong++;
+    btn.classList.add("wrong");
+    beep(220, 0.2, "sawtooth");
+    if (pilotWrong >= 2) {
+      speak("Chưa đúng rồi. Bé đếm lại các bạn nhỏ trên máy bay nhé! Đếm từ từ thôi.");
+      document.getElementById("pilotQuestion").textContent = pilotQText + " (Bé đếm các bạn nhỏ nhé!)";
+    } else {
+      speak("Chưa đúng rồi, bé thử lại nhé!");
+    }
+    setTimeout(() => btn.classList.remove("wrong"), 900);
+  }
+}
+
+/* ============ GAME 3: Lính cứu hỏa ============ */
+let fireLeft = [3, 3, 3];
+const TRUCK_POS = ["4%", "36%", "68%"];
+function resetFire() {
+  fireLeft = [3, 3, 3];
+  document.getElementById("fireWin").style.display = "none";
+  document.querySelectorAll(".house").forEach((h, i) => {
+    h.classList.remove("saved");
+    document.getElementById("left" + i).textContent = 3;
+  });
+  document.getElementById("truck").style.left = "4%";
+  document.getElementById("fireBubble").textContent = "Có khói ở 3 ngôi nhà! Bé chạm vào lửa để xịt nước nhé. Mỗi đám lửa cần xịt 3 lần.";
+}
+function spray(ev, houseIdx) {
+  if (fireLeft[houseIdx] <= 0) return;
+  popSound();
+  document.getElementById("truck").style.left = TRUCK_POS[houseIdx];
+  fireLeft[houseIdx]--;
+  document.getElementById("left" + houseIdx).textContent = fireLeft[houseIdx];
+  const street = document.getElementById("street");
+  const drop = document.createElement("div");
+  drop.className = "drop"; drop.textContent = "💦";
+  const rect = street.getBoundingClientRect();
+  drop.style.left = (ev.clientX - rect.left - 20) + "px";
+  drop.style.top = (ev.clientY - rect.top - 40) + "px";
+  street.appendChild(drop);
+  setTimeout(() => drop.remove(), 900);
+  const house = document.querySelector('.house[data-house="' + houseIdx + '"]');
+  if (fireLeft[houseIdx] <= 0) {
+    house.classList.add("saved");
+    speak("Bé dập tắt lửa ở nhà này rồi! Giỏi quá!");
+    goodSound();
+  } else {
+    speak("Xịt! Còn " + fireLeft[houseIdx] + " lần nữa!");
+  }
+  if (fireLeft.every(n => n <= 0)) {
+    setTimeout(() => {
+      document.getElementById("fireWin").style.display = "block";
+      document.getElementById("fireBubble").textContent = "Bé cứu được cả 3 ngôi nhà! Nhớ nhé: thấy cháy thì gọi 1-1-4!";
+      speak("Hoan hô! Bé cứu được cả ba ngôi nhà! Thấy cháy thì gọi một một bốn nhé!");
+      awardStar("fire");
+    }, 800);
+  }
+}
+
+/* ============ Khu phụ huynh ============ */
+function openParent() {
+  document.getElementById("parentModal").classList.add("open");
+  document.getElementById("parentGate").style.display = "block";
+  document.getElementById("parentArea").style.display = "none";
+}
+function closeParent() { document.getElementById("parentModal").classList.remove("open"); }
+function parentAnswer(n) {
+  if (n === 7) {
+    document.getElementById("parentGate").style.display = "none";
+    document.getElementById("parentArea").style.display = "block";
+    const got = ["build", "pilot", "fire"].filter(k => stars[k]).length;
+    document.getElementById("parentStats").innerHTML =
+      "⭐ Bé đã nhận: <b>" + got + "/3</b> ngôi sao<br>" +
+      "🧱 Xây nhà: " + (stars.build ? "đã xong" : "chưa xong") + "<br>" +
+      "✈️ Phi công: " + (stars.pilot ? "đã xong" : "chưa xong") + "<br>" +
+      "🚒 Cứu hỏa: " + (stars.fire ? "đã xong" : "chưa xong") + "<br><br>" +
+      "Game chạy offline hoàn toàn, không quảng cáo,<br>không thu thập dữ liệu. Tiến trình chỉ lưu trên máy này.";
+  } else {
+    alert("Chưa đúng rồi, phụ huynh thử lại nhé!");
+  }
+}
+function resetProgress() {
+  stars = {}; saveStars(); refreshStars();
+  document.getElementById("parentStats").innerHTML = "Đã xóa tiến trình của bé.";
+}
+
+/* Khởi động */
+refreshStars();
+</script>
+</body>
+</html>
